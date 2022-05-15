@@ -280,3 +280,11 @@ mapRWSET f k = RWSET
           Right a ->
             runFn3 done s a w
   )
+
+withRWSET :: forall r1 r2 w s e m a. (r2 -> s -> r1 /\ s) -> RWSET r1 w s e m a -> RWSET r2 w s e m a
+withRWSET f (RWSET k) = RWSET
+  ( mkFn6 \environment1 state1 more lift' error done ->
+      case f environment1 state1 of
+        (environment2 /\ state2) ->
+          runFn6 k environment2 state2 more lift' error done
+  )
