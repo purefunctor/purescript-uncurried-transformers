@@ -1,6 +1,7 @@
 { name = "cps"
 , dependencies =
   [ "console"
+  , "control"
   , "effect"
   , "functions"
   , "newtype"
