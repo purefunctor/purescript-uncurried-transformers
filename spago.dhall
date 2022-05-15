@@ -3,6 +3,7 @@
   [ "console"
   , "control"
   , "effect"
+  , "either"
   , "functions"
   , "newtype"
   , "prelude"
