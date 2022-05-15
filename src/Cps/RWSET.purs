@@ -229,8 +229,7 @@ data RunRWSET r w s e m a
 
 runRWSET
   :: forall r w s e m a
-   . Monoid w
-  => MonadRec m
+   . MonadRec m
   => r
   -> s
   -> RWSET (RunRWSET r w s e m a) r w s e m a
@@ -252,8 +251,7 @@ runRWSET r s (RWSET k) =
 
 evalRWSET
   :: forall r w s e m a
-   . Monoid w
-  => MonadRec m
+   . MonadRec m
   => r
   -> s
   -> RWSET (RunRWSET r w s e m a) r w s e m a
@@ -262,10 +260,26 @@ evalRWSET r s k = snd <$> runRWSET r s k
 
 execRWSET
   :: forall r w s e m a
-   . Monoid w
-  => MonadRec m
+   . MonadRec m
   => r
   -> s
   -> RWSET (RunRWSET r w s e m a) r w s e m a
   -> m (s /\ w)
 execRWSET r s k = (map snd) <$> runRWSET r s k
+
+mapRWSET
+  :: forall r w1 w2 s e m1 m2 a1 a2
+   . MonadRec m1
+  => Functor m2
+  => (m1 (s /\ Either e a1 /\ w1) -> m2 (s /\ Either e a2 /\ w2))
+  -> RWSET (RunRWSET r w1 s e m1 a1) r w1 s e m1 a1
+  -> RWSET (RunRWSET r w2 s e m2 a2) r w2 s e m2 a2
+mapRWSET f k = RWSET
+  ( mkFn6 \environment state _ lift' error done ->
+      lift' $ f (runRWSET environment state k) <#> \(s /\ ea /\ w) _ ->
+        case ea of
+          Left e ->
+            runFn3 error s e w
+          Right a ->
+            runFn3 done s a w
+  )
