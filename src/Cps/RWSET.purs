@@ -13,7 +13,6 @@ import Control.Monad.Trans.Class (class MonadTrans, lift)
 import Control.Monad.Writer.Class (class MonadTell, class MonadWriter)
 import Data.Either (Either(..))
 import Data.Function.Uncurried (Fn3, Fn6, mkFn3, mkFn6, runFn3, runFn6)
-import Data.Newtype (class Newtype)
 import Data.Tuple (snd)
 import Data.Tuple.Nested (type (/\), (/\))
 import Effect.Class (class MonadEffect, liftEffect)
@@ -23,30 +22,28 @@ newtype RWSET
   -> Type
   -> Type
   -> Type
-  -> Type
   -> (Type -> Type)
   -> Type
   -> Type
-newtype RWSET c r w s e m a = RWSET
-  ( Fn6
-      -- Environment
-      r
-      -- State
-      s
-      -- Trampoline
-      ((Unit -> c) -> c)
-      -- Lift
-      (m (Unit -> c) -> c)
-      -- Error
-      (Fn3 s e w c)
-      -- Success
-      (Fn3 s a w c)
-      c
+newtype RWSET r w s e m a = RWSET
+  ( forall c.
+      Fn6
+        -- Environment
+        r
+        -- State
+        s
+        -- Trampoline
+        ((Unit -> c) -> c)
+        -- Lift
+        (m (Unit -> c) -> c)
+        -- Error
+        (Fn3 s e w c)
+        -- Success
+        (Fn3 s a w c)
+        c
   )
 
-derive instance Newtype (RWSET c r w s e m a) _
-
-instance Functor (RWSET c r w s e m) where
+instance Functor (RWSET r w s e m) where
   map f (RWSET k) = RWSET
     ( mkFn6 \environment state0 more lift' error done ->
         more \_ -> runFn6 k environment state0 more lift' error
@@ -55,7 +52,7 @@ instance Functor (RWSET c r w s e m) where
           )
     )
 
-instance Monoid w => Apply (RWSET c r w s e m) where
+instance Monoid w => Apply (RWSET r w s e m) where
   apply (RWSET kf) (RWSET ka) = RWSET
     ( mkFn6 \environment state0 more lift' error done ->
         more \_ -> runFn6 kf environment state0 more lift' error
@@ -67,13 +64,13 @@ instance Monoid w => Apply (RWSET c r w s e m) where
           )
     )
 
-instance Monoid w => Applicative (RWSET c r w s e m) where
+instance Monoid w => Applicative (RWSET r w s e m) where
   pure a = RWSET
     ( mkFn6 \_ state _ _ _ done ->
         runFn3 done state a mempty
     )
 
-instance Monoid w => Alt (RWSET c r w s e m) where
+instance Monoid w => Alt (RWSET r w s e m) where
   alt (RWSET ka) (RWSET kb) = RWSET
     ( mkFn6 \environment state0 more lift error done ->
         more \_ -> runFn6 ka environment state0 more lift
@@ -84,7 +81,7 @@ instance Monoid w => Alt (RWSET c r w s e m) where
           done
     )
 
-instance Monoid w => Bind (RWSET c r w s e m) where
+instance Monoid w => Bind (RWSET r w s e m) where
   bind (RWSET kx) f = RWSET
     ( mkFn6 \environment state0 more lift' error done ->
         more \_ -> runFn6 kx environment state0 more lift' error
@@ -98,18 +95,18 @@ instance Monoid w => Bind (RWSET c r w s e m) where
           )
     )
 
-instance Monoid w => Monad (RWSET c r w s e m)
+instance Monoid w => Monad (RWSET r w s e m)
 
-instance Monoid w => MonadAsk r (RWSET c r w s e m) where
+instance Monoid w => MonadAsk r (RWSET r w s e m) where
   ask = RWSET
     ( mkFn6 \environment state _ _ _ done ->
         runFn3 done state environment mempty
     )
 
-instance (Monoid w, MonadEffect m) => MonadEffect (RWSET c r w s e m) where
+instance (Monoid w, MonadEffect m) => MonadEffect (RWSET r w s e m) where
   liftEffect = lift <<< liftEffect
 
-instance Monoid w => MonadError e (RWSET c r w s e m) where
+instance Monoid w => MonadError e (RWSET r w s e m) where
   catchError (RWSET ka) f = RWSET
     ( mkFn6 \environment state0 more lift' error done ->
         more \_ -> runFn6 ka environment state0 more lift'
@@ -124,7 +121,7 @@ instance Monoid w => MonadError e (RWSET c r w s e m) where
           done
     )
 
-instance Monoid w => MonadReader r (RWSET c r w s e m) where
+instance Monoid w => MonadReader r (RWSET r w s e m) where
   local f (RWSET ka) = RWSET
     ( mkFn6 \environment state0 more lift' error done ->
         more \_ -> runFn6 ka (f environment) state0 more lift' error
@@ -133,7 +130,7 @@ instance Monoid w => MonadReader r (RWSET c r w s e m) where
           )
     )
 
-instance Monoid w => MonadRec (RWSET c r w s e m) where
+instance Monoid w => MonadRec (RWSET r w s e m) where
   tailRecM f a = RWSET
     ( mkFn6 \environment state0 more lift error done ->
         let
@@ -156,7 +153,7 @@ instance Monoid w => MonadRec (RWSET c r w s e m) where
           runFn3 loop state0 a 30
     )
 
-instance Monoid w => MonadState s (RWSET c r w s e m) where
+instance Monoid w => MonadState s (RWSET r w s e m) where
   state f = RWSET
     ( mkFn6 \_ state0 _ _ _ done ->
         case f state0 of
@@ -164,25 +161,25 @@ instance Monoid w => MonadState s (RWSET c r w s e m) where
             runFn3 done state1 a mempty
     )
 
-instance Monoid w => MonadTell w (RWSET c r w s e m) where
+instance Monoid w => MonadTell w (RWSET r w s e m) where
   tell w = RWSET
     ( mkFn6 \_ state _ _ _ done ->
         runFn3 done state unit w
     )
 
-instance Monoid w => MonadThrow e (RWSET c r w s e m) where
+instance Monoid w => MonadThrow e (RWSET r w s e m) where
   throwError e = RWSET
     ( mkFn6 \_ state _ _ error _ ->
         runFn3 error state e mempty
     )
 
-instance Monoid w => MonadTrans (RWSET c r w s e) where
+instance Monoid w => MonadTrans (RWSET r w s e) where
   lift m = RWSET
     ( mkFn6 \_ state _ lift' _ done ->
         lift' (map (\a _ -> runFn3 done state a mempty) m)
     )
 
-instance Monoid w => MonadWriter w (RWSET c r w s e m) where
+instance Monoid w => MonadWriter w (RWSET r w s e m) where
   listen (RWSET ka) = RWSET
     ( mkFn6 \environment state0 more lift' error done ->
         more \_ -> runFn6 ka environment state0 more lift' error
@@ -199,13 +196,13 @@ instance Monoid w => MonadWriter w (RWSET c r w s e m) where
           )
     )
 
-instance (Monoid w, Semigroup a) => Semigroup (RWSET c r w s e m a) where
+instance (Monoid w, Semigroup a) => Semigroup (RWSET r w s e m a) where
   append = lift2 (<>)
 
-instance (Monoid w, Monoid a) => Monoid (RWSET c r w s e m a) where
+instance (Monoid w, Monoid a) => Monoid (RWSET r w s e m a) where
   mempty = pure mempty
 
-instance Monoid w => Lazy (RWSET c r w s e m a) where
+instance Monoid w => Lazy (RWSET r w s e m a) where
   defer f = RWSET
     ( mkFn6 \environment state0 more lift' error done ->
         case f unit of
@@ -232,7 +229,7 @@ runRWSET
    . MonadRec m
   => r
   -> s
-  -> RWSET (RunRWSET r w s e m a) r w s e m a
+  -> RWSET r w s e m a
   -> m (s /\ Either e a /\ w)
 runRWSET r s (RWSET k) =
   let
@@ -254,7 +251,7 @@ evalRWSET
    . MonadRec m
   => r
   -> s
-  -> RWSET (RunRWSET r w s e m a) r w s e m a
+  -> RWSET r w s e m a
   -> m (Either e a /\ w)
 evalRWSET r s k = snd <$> runRWSET r s k
 
@@ -263,7 +260,7 @@ execRWSET
    . MonadRec m
   => r
   -> s
-  -> RWSET (RunRWSET r w s e m a) r w s e m a
+  -> RWSET r w s e m a
   -> m (s /\ w)
 execRWSET r s k = (map snd) <$> runRWSET r s k
 
@@ -272,8 +269,8 @@ mapRWSET
    . MonadRec m1
   => Functor m2
   => (m1 (s /\ Either e a1 /\ w1) -> m2 (s /\ Either e a2 /\ w2))
-  -> RWSET (RunRWSET r w1 s e m1 a1) r w1 s e m1 a1
-  -> RWSET (RunRWSET r w2 s e m2 a2) r w2 s e m2 a2
+  -> RWSET r w1 s e m1 a1
+  -> RWSET r w2 s e m2 a2
 mapRWSET f k = RWSET
   ( mkFn6 \environment state _ lift' error done ->
       lift' $ f (runRWSET environment state k) <#> \(s /\ ea /\ w) _ ->
