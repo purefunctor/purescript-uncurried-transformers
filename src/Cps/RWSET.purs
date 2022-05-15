@@ -14,6 +14,7 @@ import Control.Monad.Writer.Class (class MonadTell, class MonadWriter)
 import Data.Either (Either(..))
 import Data.Function.Uncurried (Fn3, Fn6, mkFn3, mkFn6, runFn3, runFn6)
 import Data.Newtype (class Newtype)
+import Data.Tuple (snd)
 import Data.Tuple.Nested (type (/\), (/\))
 import Effect.Class (class MonadEffect, liftEffect)
 
@@ -224,7 +225,7 @@ data RunRWSET
 data RunRWSET r w s e m a
   = More (Unit -> RunRWSET r w s e m a)
   | Lift (m (Unit -> RunRWSET r w s e m a))
-  | Stop s w (Either e a)
+  | Stop s (Either e a) w
 
 runRWSET
   :: forall r w s e m a
@@ -233,7 +234,7 @@ runRWSET
   => r
   -> s
   -> RWSET (RunRWSET r w s e m a) r w s e m a
-  -> m (s /\ w /\ Either e a)
+  -> m (s /\ Either e a /\ w)
 runRWSET r s (RWSET k) =
   let
     go step = case step unit of
@@ -241,10 +242,30 @@ runRWSET r s (RWSET k) =
         go n
       Lift m ->
         Loop <$> m
-      Stop s' w a ->
-        pure $ Done $ s' /\ w /\ a
+      Stop s' a w ->
+        pure $ Done $ s' /\ a /\ w
   in
     tailRecM go \_ ->
       runFn6 k r s More Lift
-        (mkFn3 \s' e w -> Stop s' w (Left e))
-        (mkFn3 \s' a w -> Stop s' w (Right a))
+        (mkFn3 \s' e w -> Stop s' (Left e) w)
+        (mkFn3 \s' a w -> Stop s' (Right a) w)
+
+evalRWSET
+  :: forall r w s e m a
+   . Monoid w
+  => MonadRec m
+  => r
+  -> s
+  -> RWSET (RunRWSET r w s e m a) r w s e m a
+  -> m (Either e a /\ w)
+evalRWSET r s k = snd <$> runRWSET r s k
+
+execRWSET
+  :: forall r w s e m a
+   . Monoid w
+  => MonadRec m
+  => r
+  -> s
+  -> RWSET (RunRWSET r w s e m a) r w s e m a
+  -> m (s /\ w)
+execRWSET r s k = (map snd) <$> runRWSET r s k
