@@ -1,6 +1,10 @@
 {
   "scripts": {
+    "bench": "spago -x bench.dhall run",
     "build": "spago build",
     "test": "spago -x tests.dhall test"
+  },
+  "devDependencies": {
+    "benchmark": "^2.1.4"
   }
 }

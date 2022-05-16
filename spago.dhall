@@ -1,7 +1,6 @@
 { name = "uncurried-transformers"
 , dependencies =
-  [ "console"
-  , "control"
+  [ "control"
   , "effect"
   , "either"
   , "functions"
