@@ -4,5 +4,5 @@ in      conf
     //  { sources = conf.sources # [ "bench/**/*.purs" ]
         , dependencies =
               conf.dependencies
-            # [ "arrays", "benchotron" ]
+            # [ "arrays", "benchotron", "free" ]
         }
