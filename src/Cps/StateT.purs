@@ -4,10 +4,10 @@ import Prelude
 
 import Control.Lazy (class Lazy)
 import Control.Monad.Error.Class (class MonadError, class MonadThrow, catchError, throwError)
-import Control.Monad.Trans.Class (class MonadTrans, lift)
 import Control.Monad.Reader.Class (class MonadAsk, class MonadReader, ask, local)
-import Control.Monad.State.Class (class MonadState)
 import Control.Monad.Rec.Class (class MonadRec)
+import Control.Monad.State.Class (class MonadState)
+import Control.Monad.Trans.Class (class MonadTrans, lift)
 import Control.Monad.Writer.Class (class MonadTell, class MonadWriter, listen, pass, tell)
 import Cps.RWSET (RWSET(..), hoistRWSET, runRWSET)
 import Data.Either (Either(..))
@@ -46,10 +46,10 @@ mapStateT
   -> StateT s m2 a2
 mapStateT f k = StateT
   ( RWSET
-    ( mkFn6 \_ state _ lift' _ done ->
-        lift' $ f (runStateT state k) <#> \(a /\ s) _ ->
-          runFn3 done s a unit
-    )
+      ( mkFn6 \_ state _ lift' _ done ->
+          lift' $ f (runStateT state k) <#> \(a /\ s) _ ->
+            runFn3 done s a unit
+      )
   )
 
 withStateT
@@ -59,9 +59,9 @@ withStateT
   -> StateT s m a
 withStateT f (StateT (RWSET k)) = StateT
   ( RWSET
-    ( mkFn6 \environment state more lift' error done ->
-        runFn6 k environment (f state) more lift' error done
-    )
+      ( mkFn6 \environment state more lift' error done ->
+          runFn6 k environment (f state) more lift' error done
+      )
   )
 
 derive newtype instance Functor (StateT s m)
@@ -83,14 +83,14 @@ instance MonadAsk r m => MonadAsk r (StateT s m) where
 instance (MonadRec m, MonadReader r m) => MonadReader r (StateT s m) where
   local f (StateT k) = StateT
     ( RWSET
-      ( mkFn6 \environment state _ lift' error done ->
-          lift' $ local f (runRWSET environment state k) <#> \(s /\ ea /\ w) _ ->
-            case ea of
-              Left e ->
-                runFn3 error s e w
-              Right a ->
-                runFn3 done s a w
-      )
+        ( mkFn6 \environment state _ lift' error done ->
+            lift' $ local f (runRWSET environment state k) <#> \(s /\ ea /\ w) _ ->
+              case ea of
+                Left e ->
+                  runFn3 error s e w
+                Right a ->
+                  runFn3 done s a w
+        )
     )
 
 instance (Monoid w, MonadTell w m) => MonadTell w (StateT s m) where
@@ -99,28 +99,27 @@ instance (Monoid w, MonadTell w m) => MonadTell w (StateT s m) where
 instance (Monoid w, MonadRec m, MonadWriter w m) => MonadWriter w (StateT s m) where
   listen (StateT k) = StateT
     ( RWSET
-      ( mkFn6 \environment state _ lift' error done -> do
-          lift' $ (listen $ runRWSET environment state k) <#> \((s /\ ea /\ _) /\ w) _ ->
-            case ea of
-              Left e ->
-                runFn3 error s e unit
-              Right a ->
-                runFn3 done s (a /\ w) unit
-      )
+        ( mkFn6 \environment state _ lift' error done -> do
+            lift' $ (listen $ runRWSET environment state k) <#> \((s /\ ea /\ _) /\ w) _ ->
+              case ea of
+                Left e ->
+                  runFn3 error s e unit
+                Right a ->
+                  runFn3 done s (a /\ w) unit
+        )
     )
 
   pass (StateT kf) = StateT
     ( RWSET
-      ( mkFn6 \environment state _ lift' error done -> do
-          lift' $ pass $ runRWSET environment state kf <#> \(s /\ eaf /\ w) ->
-            case eaf of
-              Left e ->
-                (\_ -> runFn3 error s e w) /\ identity
-              Right (a /\ f) ->
-                (\_ -> runFn3 done s a w) /\ f
-      )
+        ( mkFn6 \environment state _ lift' error done -> do
+            lift' $ pass $ runRWSET environment state kf <#> \(s /\ eaf /\ w) ->
+              case eaf of
+                Left e ->
+                  (\_ -> runFn3 error s e w) /\ identity
+                Right (a /\ f) ->
+                  (\_ -> runFn3 done s a w) /\ f
+        )
     )
-
 
 instance MonadThrow e m => MonadThrow e (StateT s m) where
   throwError = lift <<< throwError
@@ -128,17 +127,18 @@ instance MonadThrow e m => MonadThrow e (StateT s m) where
 instance (MonadRec m, MonadError e m) => MonadError e (StateT s m) where
   catchError (StateT k) f = StateT
     ( RWSET
-      ( mkFn6 \environment state _ lift' error done ->
-          lift' $ catchError (runRWSET environment state k)
-            ( \e ->
-                case f e of
-                  StateT fk ->
-                    runRWSET environment state fk
-            ) <#> \(s /\ ea /\ w) _ ->
+        ( mkFn6 \environment state _ lift' error done ->
+            lift' $
+              catchError (runRWSET environment state k)
+                ( \e ->
+                    case f e of
+                      StateT fk ->
+                        runRWSET environment state fk
+                ) <#> \(s /\ ea /\ w) _ ->
                 case ea of
                   Left e ->
                     runFn3 error s e w
                   Right a ->
                     runFn3 done s a w
-      )
+        )
     )

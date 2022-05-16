@@ -26,21 +26,22 @@ newtype RWSET
   -> Type
   -> Type
 newtype RWSET r w s e m a = RWSET
-  ( forall c.
-      Fn6
-        -- Environment
-        r
-        -- State
-        s
-        -- Trampoline
-        ((Unit -> c) -> c)
-        -- Lift
-        (m (Unit -> c) -> c)
-        -- Error
-        (Fn3 s e w c)
-        -- Success
-        (Fn3 s a w c)
-        c
+  ( forall c
+     . Fn6
+         -- Environment
+         r
+         -- State
+         s
+         -- Trampoline
+         ((Unit -> c) -> c)
+         -- Lift
+         (m (Unit -> c) -> c)
+         -- Error
+         (Fn3 s e w c)
+         -- Success
+         (Fn3 s a w c)
+         -- Continuation
+         c
   )
 
 instance Functor (RWSET r w s e m) where
@@ -287,7 +288,8 @@ mapRWSET f k = RWSET
             runFn3 done s a w
   )
 
-withRWSET :: forall r1 r2 w s e m a. (r2 -> s -> r1 /\ s) -> RWSET r1 w s e m a -> RWSET r2 w s e m a
+withRWSET
+  :: forall r1 r2 w s e m a. (r2 -> s -> r1 /\ s) -> RWSET r1 w s e m a -> RWSET r2 w s e m a
 withRWSET f (RWSET k) = RWSET
   ( mkFn6 \environment1 state1 more lift' error done ->
       case f environment1 state1 of
