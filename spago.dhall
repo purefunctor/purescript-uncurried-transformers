@@ -5,7 +5,6 @@
   , "effect"
   , "either"
   , "functions"
-  , "newtype"
   , "prelude"
   , "tailrec"
   , "transformers"
