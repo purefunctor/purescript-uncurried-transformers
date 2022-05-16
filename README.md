@@ -1,2 +1,2 @@
-# purescript-cps
-CPS-based monad transformers for stack-safe computation.
+# purescript-uncurried-transformers
+Stack-safe monad transformers implemented using continuation-passing style and uncurried functions.

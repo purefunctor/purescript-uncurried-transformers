@@ -1,4 +1,4 @@
-{ name = "cps"
+{ name = "uncurried-transformers"
 , dependencies =
   [ "console"
   , "control"
