@@ -1,0 +1,32 @@
+name: Build and Test Package
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkut Repository
+        uses: actions/checkout@v2
+
+      - name: Setup PureScript Tooling
+        uses: purescript-contrib/setup-purescript@main
+
+      - name: Cache PureScript dependencies
+        uses: actions/cache@v2
+        with:
+          key: spago-${{ hashFiles('**/*.dhall') }}
+          path: |
+            .spago
+            output
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2.0.1
+        with:
+          version: latest
+
+      - name: Build Package
+        run: pnpm build
+
+      - name: Test Package
+        run: pnpm test
