@@ -21,10 +21,10 @@ countToN = mkBenchmark
   , inputsPerSize: 100
   , gen: pure
   , functions:
-      [ benchFn "tailrecm-uncurried-transformers" $ \n -> Cps.runState 0 (programSafe n)
+      [ benchFn "naive-transformers" $ \n -> runTrampoline $ Trs.runRWST (program' n) unit 0
       , benchFn "tailrecm-transformers" $ \n -> runTrampoline $ Trs.runRWST (programSafe' n) unit 0
       , benchFn "naive-uncurried-transformers" $ \n -> Cps.runState 0 (program n)
-      , benchFn "naive-transformers" $ \n -> runTrampoline $ Trs.runRWST (program' n) unit 0
+      , benchFn "tailrecm-uncurried-transformers" $ \n -> Cps.runState 0 (programSafe n)
       ]
  }
   where
