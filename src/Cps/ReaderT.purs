@@ -46,10 +46,10 @@ mapReaderT f k = ReaderT
   )
 
 withReaderT
-  :: forall r m a
-   . (r -> r)
-  -> ReaderT r m a
-  -> ReaderT r m a
+  :: forall r1 r2 m a
+   . (r2 -> r1)
+  -> ReaderT r1 m a
+  -> ReaderT r2 m a
 withReaderT f (ReaderT (RWSET k)) = ReaderT
   ( RWSET
       ( mkFn6 \environment state more lift' error done ->
