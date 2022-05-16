@@ -5,8 +5,8 @@ import Prelude
 import Benchotron.Core (Benchmark, benchFn, mkBenchmark)
 import Benchotron.UI.Console (runSuite)
 import Cps.State as Cps
-import Control.Monad.Rec.Class (class MonadRec, Step(..), tailRecM)
-import Control.Monad.State.Trans (class MonadState, get, put)
+import Control.Monad.Rec.Class (Step(..), tailRecM)
+import Control.Monad.State.Trans (get, put)
 import Control.Monad.RWS as Trs
 import Data.Array ((..))
 import Effect (Effect)
@@ -27,23 +27,26 @@ stateLoop = mkBenchmark
       ]
   }
   where
-  program_ :: forall m. MonadState Int m => Int -> m Unit
-  program_ limit = go
+  program :: Int -> Cps.State Int Unit
+  program limit = go unit
     where
-    go = do
+    go _ = do
       current <- get
       unless (current == limit) do
         put (current + 1)
-        go
-
-  program :: Int -> Cps.State Int Unit
-  program = program_
+        go unit
 
   program' :: Int -> Trs.RWS Unit Unit Int Unit
-  program' = program_
+  program' limit = go unit
+    where
+    go _ = do
+      current <- get
+      unless (current == limit) do
+        put (current + 1)
+        go unit
 
-  programSafe_ :: forall m. MonadRec m => MonadState Int m => Int -> m Unit
-  programSafe_ limit = tailRecM go unit
+  programSafe :: Int -> Cps.State Int Unit
+  programSafe limit = tailRecM go unit
     where
     go _ = do
       current <- get
@@ -53,11 +56,16 @@ stateLoop = mkBenchmark
         put (current + 1)
         pure $ Loop unit
 
-  programSafe :: Int -> Cps.State Int Unit
-  programSafe = programSafe_
-
   programSafe' :: Int -> Trs.RWS Unit Unit Int Unit
-  programSafe' = programSafe_
+  programSafe' limit = tailRecM go unit
+    where
+    go _ = do
+      current <- get
+      if current == limit then do
+        pure $ Done unit
+      else do
+        put (current + 1)
+        pure $ Loop unit
 
 main :: Effect Unit
 main = runSuite
