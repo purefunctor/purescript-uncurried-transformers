@@ -9,7 +9,7 @@ import Control.Monad.Reader.Class (class MonadAsk, class MonadReader, ask, local
 import Control.Monad.State.Class (class MonadState)
 import Control.Monad.Rec.Class (class MonadRec)
 import Control.Monad.Writer.Class (class MonadTell, class MonadWriter, listen, pass, tell)
-import Cps.RWSET (RWSET(..), runRWSET)
+import Cps.RWSET (RWSET(..), hoistRWSET, runRWSET)
 import Data.Either (Either(..))
 import Data.Function.Uncurried (mkFn6, runFn3, runFn6)
 import Data.Tuple (fst, snd)
@@ -33,6 +33,9 @@ evalStateT s k = map fst $ runStateT s k
 
 execStateT :: forall s m a. MonadRec m => s -> StateT s m a -> m s
 execStateT s k = map snd $ runStateT s k
+
+hoistStateT :: forall s m n a. (m ~> n) -> StateT s m a -> StateT s n a
+hoistStateT f (StateT k) = StateT (hoistRWSET f k)
 
 mapStateT
   :: forall s m1 m2 a1 a2

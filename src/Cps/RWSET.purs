@@ -264,6 +264,12 @@ execRWSET
   -> m (s /\ w)
 execRWSET r s k = (map snd) <$> runRWSET r s k
 
+hoistRWSET :: forall r w s e m n a. (m ~> n) -> RWSET r w s e m a -> RWSET r w s e n a
+hoistRWSET f (RWSET k) = RWSET
+  ( mkFn6 \environment state more lift' error done ->
+      runFn6 k environment state more (lift' <<< f) error done
+  )
+
 mapRWSET
   :: forall r w1 w2 s e m1 m2 a1 a2
    . MonadRec m1
