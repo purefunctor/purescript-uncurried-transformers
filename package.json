@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "postinstall": "spago install",
     "bench": "spago -x bench.dhall run",
     "build": "spago build",
     "test": "spago -x tests.dhall test"

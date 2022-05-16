@@ -25,8 +25,20 @@ jobs:
         with:
           version: latest
 
+      - name: Install Dependencies
+        run: pnpm install
+
       - name: Build Package
         run: pnpm build
 
       - name: Test Package
         run: pnpm test
+
+      - name: Run Benchmark
+        run: pnpm bench
+
+      - name: Benchmark Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-results
+          path: tmp/*.json
