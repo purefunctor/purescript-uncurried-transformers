@@ -102,7 +102,7 @@ instance Monoid w => Bind (RWSET r w s e m) where
           ( mkFn3 \state1 x w0 ->
               more \_ -> case f x of
                 RWSET ky ->
-                  more \_ -> runFn6 ky environment state1 more lift' error
+                  runFn6 ky environment state1 more lift' error
                     ( mkFn3 \state2 y w1 ->
                         more \_ -> runFn3 done state2 y (w0 <> w1)
                     )
