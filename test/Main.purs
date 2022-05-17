@@ -2,7 +2,6 @@ module Test.Main where
 
 import Prelude
 
-import Cps.StateT as Cps
 import Control.Monad.Rec.Class (class MonadRec, Step(..), tailRecM)
 import Control.Monad.State.Trans (class MonadState, get, put)
 import Control.Monad.State.Trans as Trs
@@ -10,6 +9,7 @@ import Effect (Effect)
 import Effect.Class (class MonadEffect)
 import Effect.Class.Console (log, logShow)
 import Effect.Exception (catchException)
+import Uncurried.StateT as Uncurried
 
 limit :: Int
 limit = 50_000
@@ -38,11 +38,11 @@ programSafe = tailRecM go unit
 
 main :: Effect Unit
 main = do
-  Cps.evalStateT 0 programSafe
+  Uncurried.evalStateT 0 programSafe
   Trs.evalStateT programSafe 0
 
   -- should not max out the call stack
-  Cps.evalStateT 0 program
+  Uncurried.evalStateT 0 program
   -- should max out the call stack
   Trs.evalStateT program 0 # catchException \_ -> do
     log "Terminated!"

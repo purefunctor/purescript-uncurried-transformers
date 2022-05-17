@@ -1,11 +1,11 @@
-module Cps.State where
+module Uncurried.State where
 
 import Prelude
 
-import Cps.StateT (StateT, evalStateT, execStateT, mapStateT, runStateT, withStateT)
 import Data.Identity (Identity(..))
 import Data.Tuple.Nested (type (/\))
 import Safe.Coerce (coerce)
+import Uncurried.StateT (StateT, evalStateT, execStateT, mapStateT, runStateT, withStateT)
 
 type State s = StateT s Identity
 

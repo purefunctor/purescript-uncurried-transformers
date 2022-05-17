@@ -4,13 +4,13 @@ import Prelude
 
 import Benchotron.Core (Benchmark, benchFn, mkBenchmark)
 import Benchotron.UI.Console (runSuite)
-import Cps.State as Cps
+import Control.Monad.RWS as Trs
 import Control.Monad.Rec.Class (Step(..), tailRecM)
 import Control.Monad.State.Trans (get, put)
 import Control.Monad.Trampoline (Trampoline, runTrampoline)
-import Control.Monad.RWS as Trs
 import Data.Array ((..))
 import Effect (Effect)
+import Uncurried.State as Uncurried
 
 countToN :: Benchmark
 countToN = mkBenchmark
@@ -23,12 +23,12 @@ countToN = mkBenchmark
   , functions:
       [ benchFn "naive-transformers" $ \n -> runTrampoline $ Trs.runRWST (program' n) unit 0
       , benchFn "tailrecm-transformers" $ \n -> runTrampoline $ Trs.runRWST (programSafe' n) unit 0
-      , benchFn "naive-uncurried-transformers" $ \n -> Cps.runState 0 (program n)
-      , benchFn "tailrecm-uncurried-transformers" $ \n -> Cps.runState 0 (programSafe n)
+      , benchFn "naive-uncurried-transformers" $ \n -> Uncurried.runState 0 (program n)
+      , benchFn "tailrecm-uncurried-transformers" $ \n -> Uncurried.runState 0 (programSafe n)
       ]
- }
+  }
   where
-  program :: Int -> Cps.State Int Unit
+  program :: Int -> Uncurried.State Int Unit
   program limit = go unit
     where
     go _ = do
@@ -46,7 +46,7 @@ countToN = mkBenchmark
         put (current + 1)
         go unit
 
-  programSafe :: Int -> Cps.State Int Unit
+  programSafe :: Int -> Uncurried.State Int Unit
   programSafe limit = tailRecM go unit
     where
     go _ = do

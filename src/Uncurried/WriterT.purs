@@ -1,4 +1,4 @@
-module Cps.WriterT where
+module Uncurried.WriterT where
 
 import Prelude
 
@@ -9,12 +9,12 @@ import Control.Monad.Rec.Class (class MonadRec)
 import Control.Monad.State.Class (class MonadState, state)
 import Control.Monad.Trans.Class (class MonadTrans, lift)
 import Control.Monad.Writer.Class (class MonadTell, class MonadWriter)
-import Cps.RWSET (RWSET(..), hoistRWSET, runRWSET)
 import Data.Either (Either(..))
 import Data.Function.Uncurried (mkFn6, runFn3)
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested (type (/\), (/\))
 import Effect.Class (class MonadEffect)
+import Uncurried.RWSET (RWSET(..), hoistRWSET, runRWSET)
 
 newtype WriterT w m a = WriterT (RWSET Unit w Unit Void m a)
 

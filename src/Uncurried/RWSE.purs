@@ -1,12 +1,12 @@
-module Cps.RWSE where
+module Uncurried.RWSE where
 
 import Prelude
 
-import Cps.RWSET (RWSET, evalRWSET, execRWSET, mapRWSET, runRWSET, withRWSET)
 import Data.Either (Either)
 import Data.Identity (Identity(..))
 import Data.Tuple.Nested (type (/\))
 import Safe.Coerce (coerce)
+import Uncurried.RWSET (RWSET, evalRWSET, execRWSET, mapRWSET, runRWSET, withRWSET)
 
 type RWSE r w s e = RWSET r w s e Identity
 

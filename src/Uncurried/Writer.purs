@@ -1,13 +1,13 @@
-module Cps.Writer where
+module Uncurried.Writer where
 
 import Prelude
 
-import Cps.RWSET (RWSET(..))
-import Cps.WriterT (WriterT(..), evalWriterT, execWriterT, mapWriterT, runWriterT)
 import Data.Function.Uncurried (mkFn6, runFn3)
 import Data.Identity (Identity(..))
 import Data.Tuple.Nested (type (/\), (/\))
 import Safe.Coerce (coerce)
+import Uncurried.RWSET (RWSET(..))
+import Uncurried.WriterT (WriterT(..), evalWriterT, execWriterT, mapWriterT, runWriterT)
 
 type Writer s = WriterT s Identity
 

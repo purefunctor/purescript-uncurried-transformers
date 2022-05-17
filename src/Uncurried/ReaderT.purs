@@ -1,4 +1,4 @@
-module Cps.ReaderT where
+module Uncurried.ReaderT where
 
 import Prelude
 
@@ -9,11 +9,11 @@ import Control.Monad.Rec.Class (class MonadRec)
 import Control.Monad.State.Class (class MonadState, state)
 import Control.Monad.Trans.Class (class MonadTrans, lift)
 import Control.Monad.Writer.Class (class MonadTell, class MonadWriter, listen, pass, tell)
-import Cps.RWSET (RWSET(..), hoistRWSET, runRWSET)
 import Data.Either (Either(..))
 import Data.Function.Uncurried (mkFn6, runFn3, runFn6)
 import Data.Tuple.Nested ((/\))
 import Effect.Class (class MonadEffect)
+import Uncurried.RWSET (RWSET(..), hoistRWSET, runRWSET)
 
 newtype ReaderT r m a = ReaderT (RWSET r Unit Unit Void m a)
 

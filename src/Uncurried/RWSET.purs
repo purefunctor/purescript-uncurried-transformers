@@ -1,4 +1,4 @@
-module Cps.RWSET where
+module Uncurried.RWSET where
 
 import Prelude
 

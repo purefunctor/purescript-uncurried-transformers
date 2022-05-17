@@ -1,4 +1,4 @@
-module Cps.StateT where
+module Uncurried.StateT where
 
 import Prelude
 
@@ -9,12 +9,12 @@ import Control.Monad.Rec.Class (class MonadRec)
 import Control.Monad.State.Class (class MonadState)
 import Control.Monad.Trans.Class (class MonadTrans, lift)
 import Control.Monad.Writer.Class (class MonadTell, class MonadWriter, listen, pass, tell)
-import Cps.RWSET (RWSET(..), hoistRWSET, runRWSET)
 import Data.Either (Either(..))
 import Data.Function.Uncurried (mkFn6, runFn3, runFn6)
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested (type (/\), (/\))
 import Effect.Class (class MonadEffect)
+import Uncurried.RWSET (RWSET(..), hoistRWSET, runRWSET)
 
 newtype StateT s m a = StateT (RWSET Unit Unit s Void m a)
 

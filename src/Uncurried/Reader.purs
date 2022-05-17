@@ -1,10 +1,10 @@
-module Cps.Reader where
+module Uncurried.Reader where
 
 import Prelude
 
-import Cps.ReaderT (ReaderT, mapReaderT, runReaderT, withReaderT)
 import Data.Identity (Identity(..))
 import Safe.Coerce (coerce)
+import Uncurried.ReaderT (ReaderT, mapReaderT, runReaderT, withReaderT)
 
 type Reader r = ReaderT r Identity
 
