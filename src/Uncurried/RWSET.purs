@@ -125,9 +125,9 @@ instance Monoid w => MonadError e (RWSET r w s e m) where
     ( mkFn6 \environment state0 more lift' error done ->
         more \_ -> runFn6 ka environment state0 more lift'
           ( mkFn3 \state1 e w0 ->
-              case f e of
+              more \_ -> case f e of
                 RWSET kb ->
-                  more \_ -> runFn6 kb environment state1 more lift' error
+                  runFn6 kb environment state1 more lift' error
                     ( mkFn3 \state2 b w1 ->
                         runFn3 done state2 b (w0 <> w1)
                     )
