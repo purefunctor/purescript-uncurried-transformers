@@ -1,3 +1,4 @@
+-- | This module defines the state monad transformer, `StateT`.
 module Uncurried.StateT where
 
 import Prelude
@@ -16,8 +17,13 @@ import Data.Tuple.Nested (type (/\), (/\))
 import Effect.Class (class MonadEffect)
 import Uncurried.RWSET (RWSET(..), hoistRWSET, runRWSET)
 
+-- | The state monad transformer, implemented as a newtype over
+-- | `RWSET`. Note that it's not recommended to stack newtypes of
+-- | `RWSET` together as it incurs an indeterminate performance
+-- | penalty that would otherwise be solved by just using `RWSET`.
 newtype StateT s m a = StateT (RWSET Unit Unit s Void m a)
 
+-- | Runs a computation inside of `StateT`.
 runStateT :: forall s m a. MonadRec m => s -> StateT s m a -> m (a /\ s)
 runStateT s (StateT k) = go <$> runRWSET unit s k
   where
@@ -28,15 +34,19 @@ runStateT s (StateT k) = go <$> runRWSET unit s k
       Right a ->
         (a /\ s')
 
+-- | Runs a computation inside of `StateT`, discarding the final state.
 evalStateT :: forall s m a. MonadRec m => s -> StateT s m a -> m a
 evalStateT s k = map fst $ runStateT s k
 
+-- | Runs a computation inside of `StateT`, discarding the final result.
 execStateT :: forall s m a. MonadRec m => s -> StateT s m a -> m s
 execStateT s k = map snd $ runStateT s k
 
+-- | Modifies the monadic context of a `StateT`.
 hoistStateT :: forall s m n a. (m ~> n) -> StateT s m a -> StateT s n a
 hoistStateT f (StateT k) = StateT (hoistRWSET f k)
 
+-- | Modifies the result type of a `StateT`.
 mapStateT
   :: forall s m1 m2 a1 a2
    . MonadRec m1
@@ -52,6 +62,7 @@ mapStateT f k = StateT
       )
   )
 
+-- | Modifies the state of a `StateT`.
 withStateT
   :: forall s m a
    . (s -> s)

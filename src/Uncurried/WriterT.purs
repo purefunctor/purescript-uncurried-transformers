@@ -1,3 +1,4 @@
+-- | This module defines the writer monad transformer, `WriterT`.
 module Uncurried.WriterT where
 
 import Prelude
@@ -16,8 +17,13 @@ import Data.Tuple.Nested (type (/\), (/\))
 import Effect.Class (class MonadEffect)
 import Uncurried.RWSET (RWSET(..), hoistRWSET, runRWSET)
 
+-- | The writer monad transformer, implemented as a newtype over
+-- | `RWSET`. Note that it's not recommended to stack newtypes of
+-- | `RWSET` together as it incurs an indeterminate performance
+-- | penalty that would otherwise be solved by just using `RWSET`.
 newtype WriterT w m a = WriterT (RWSET Unit w Unit Void m a)
 
+-- | Runs a computation inside of `WriterT`.
 runWriterT :: forall w m a. Monoid w => MonadRec m => WriterT w m a -> m (a /\ w)
 runWriterT (WriterT k) = go <$> runRWSET unit unit k
   where
@@ -28,15 +34,19 @@ runWriterT (WriterT k) = go <$> runRWSET unit unit k
       Right a ->
         a /\ w
 
+-- | Runs a computation inside of `WriterT`, discarding the final accumulator.
 evalWriterT :: forall w m a. Monoid w => MonadRec m => WriterT w m a -> m a
 evalWriterT k = fst <$> runWriterT k
 
+-- | Runs a computation inside of `WriterT`, discarding the final result.
 execWriterT :: forall w m a. Monoid w => MonadRec m => WriterT w m a -> m w
 execWriterT k = snd <$> runWriterT k
 
+-- | Modifies the monadic context of a `WriterT`.
 hoistWriterT :: forall w m n a. (m ~> n) -> WriterT w m a -> WriterT w n a
 hoistWriterT f (WriterT k) = WriterT (hoistRWSET f k)
 
+-- | Modifies the result and accumulator types of a `WriterT`.
 mapWriterT
   :: forall w1 w2 m1 m2 a1 a2
    . Monoid w1

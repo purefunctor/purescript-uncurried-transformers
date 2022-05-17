@@ -1,3 +1,4 @@
+-- | This module defines the reader monad transformer, `ReaderT`.
 module Uncurried.ReaderT where
 
 import Prelude
@@ -15,8 +16,13 @@ import Data.Tuple.Nested ((/\))
 import Effect.Class (class MonadEffect)
 import Uncurried.RWSET (RWSET(..), hoistRWSET, runRWSET)
 
+-- | The reader monad transformer, implemented as a newtytpe over
+-- | `RWSET`. Note that it's not recommended to stack newtypes of
+-- | `RWSET` together as it incurs an indeterminate performance
+-- | penalty that would otherwise be solved by just using `RWSET`.
 newtype ReaderT r m a = ReaderT (RWSET r Unit Unit Void m a)
 
+-- | Runs a computation inside of `ReaderT`.
 runReaderT :: forall r m a. MonadRec m => r -> ReaderT r m a -> m a
 runReaderT r (ReaderT k) = go <$> runRWSET r unit k
   where
@@ -27,9 +33,11 @@ runReaderT r (ReaderT k) = go <$> runRWSET r unit k
       Right a ->
         a
 
+-- | Modifies the monadic context of a `ReaderT`.
 hoistReaderT :: forall r m n a. (m ~> n) -> ReaderT r m a -> ReaderT r n a
 hoistReaderT f (ReaderT k) = ReaderT (hoistRWSET f k)
 
+-- | Modifies the result type of a `ReaderT`.
 mapReaderT
   :: forall r m1 m2 a1 a2
    . MonadRec m1
@@ -45,6 +53,7 @@ mapReaderT f k = ReaderT
       )
   )
 
+-- | Modifies the environment type of a `ReaderT`.
 withReaderT
   :: forall r1 r2 m a
    . (r2 -> r1)

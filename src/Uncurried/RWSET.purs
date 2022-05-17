@@ -1,4 +1,14 @@
-module Uncurried.RWSET where
+-- | This module defines the reader-writer-state-error monad
+-- | transformer, `RWSET`.
+module Uncurried.RWSET
+  ( RWSET(..)
+  , runRWSET
+  , evalRWSET
+  , execRWSET
+  , hoistRWSET
+  , mapRWSET
+  , withRWSET
+  ) where
 
 import Prelude
 
@@ -17,6 +27,9 @@ import Data.Tuple (snd)
 import Data.Tuple.Nested (type (/\), (/\))
 import Effect.Class (class MonadEffect, liftEffect)
 
+-- | The reader-writer-state-error monad transformer, which combines the
+-- | functionality of `ReaderT`, `WriterT`, `StateT`, and `ExceptT` into
+-- | a single monad transformer.
 newtype RWSET
   :: Type
   -> Type
@@ -225,6 +238,7 @@ data RunRWSET r w s e m a
   | Lift (m (Unit -> RunRWSET r w s e m a))
   | Stop s (Either e a) w
 
+-- | Runs a computation inside of `RWSET`.
 runRWSET
   :: forall r w s e m a
    . MonadRec m
@@ -247,6 +261,7 @@ runRWSET r s (RWSET k) =
         (mkFn3 \s' e w -> Stop s' (Left e) w)
         (mkFn3 \s' a w -> Stop s' (Right a) w)
 
+-- | Runs a computation inside of `RWSET`, discarding the final state.
 evalRWSET
   :: forall r w s e m a
    . MonadRec m
@@ -256,6 +271,7 @@ evalRWSET
   -> m (Either e a /\ w)
 evalRWSET r s k = snd <$> runRWSET r s k
 
+-- | Runs a computation inside of `RWSET`, discarding the final result.
 execRWSET
   :: forall r w s e m a
    . MonadRec m
@@ -265,12 +281,14 @@ execRWSET
   -> m (s /\ w)
 execRWSET r s k = (map snd) <$> runRWSET r s k
 
+-- | Modifies the monadic context of a `RWSET`.
 hoistRWSET :: forall r w s e m n a. (m ~> n) -> RWSET r w s e m a -> RWSET r w s e n a
 hoistRWSET f (RWSET k) = RWSET
   ( mkFn6 \environment state more lift' error done ->
       runFn6 k environment state more (lift' <<< f) error done
   )
 
+-- | Modifies the result and accumulator types of a `RWSET`.
 mapRWSET
   :: forall r w1 w2 s e m1 m2 a1 a2
    . MonadRec m1
@@ -288,6 +306,7 @@ mapRWSET f k = RWSET
             runFn3 done s a w
   )
 
+-- | Modifies the environment type of a `RWSET`.
 withRWSET
   :: forall r1 r2 w s e m a. (r2 -> s -> r1 /\ s) -> RWSET r1 w s e m a -> RWSET r2 w s e m a
 withRWSET f (RWSET k) = RWSET
