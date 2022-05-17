@@ -1,0 +1,28 @@
+{
+    "name": "purescript-uncurried-transformers",
+    "license": [
+        "BSD-3-Clause"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/PureFunctor/purescript-uncurried-transformers.git"
+    },
+    "ignore": [
+        "**/.*",
+        "node_modules",
+        "bower_components",
+        "output"
+    ],
+    "dependencies": {
+        "purescript-control": "^v6.0.0",
+        "purescript-effect": "^v4.0.0",
+        "purescript-either": "^v6.0.0",
+        "purescript-functions": "^v6.0.0",
+        "purescript-identity": "^v6.0.0",
+        "purescript-prelude": "^v6.0.0",
+        "purescript-safe-coerce": "^v2.0.0",
+        "purescript-tailrec": "^v6.0.0",
+        "purescript-transformers": "^v6.0.0",
+        "purescript-tuples": "^v7.0.0"
+    }
+}
