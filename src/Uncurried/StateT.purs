@@ -23,6 +23,16 @@ import Uncurried.RWSET (RWSET(..), hoistRWSET, runRWSET)
 -- | penalty that would otherwise be solved by just using `RWSET`.
 newtype StateT s m a = StateT (RWSET Unit Unit s Void m a)
 
+-- | Construct a `StateT` given a function that treads through some state.
+stateT :: forall s m a. Functor m => (s -> m (a /\ s)) -> StateT s m a
+stateT k = StateT
+  ( RWSET
+      ( mkFn6 \_ state0 more lift _ done ->
+          more \_ -> lift $ k state0 <#> \(a /\ state1) _ ->
+            runFn3 done state1 a unit
+      )
+  )
+
 -- | Runs a computation inside of `StateT`.
 runStateT :: forall s m a. MonadRec m => s -> StateT s m a -> m (a /\ s)
 runStateT s (StateT k) = go <$> runRWSET unit s k

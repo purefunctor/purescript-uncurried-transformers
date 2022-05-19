@@ -5,10 +5,14 @@ import Prelude
 
 import Data.Identity (Identity(..))
 import Safe.Coerce (coerce)
-import Uncurried.ReaderT (ReaderT, mapReaderT, runReaderT, withReaderT)
+import Uncurried.ReaderT (ReaderT, mapReaderT, readerT, runReaderT, withReaderT)
 
 -- | A type synonym for a `ReaderT` with `Identity` as its base monad.
 type Reader r = ReaderT r Identity
+
+-- | Construct a `Reader` given a function that requires some context.
+reader :: forall r a. (r -> a) -> Reader r a
+reader = readerT <<< coerce
 
 -- | Runs a computation inside of `Reader`.
 runReader :: forall r a. r -> Reader r a -> a

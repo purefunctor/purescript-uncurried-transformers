@@ -23,6 +23,16 @@ import Uncurried.RWSET (RWSET(..), hoistRWSET, runRWSET)
 -- | penalty that would otherwise be solved by just using `RWSET`.
 newtype WriterT w m a = WriterT (RWSET Unit w Unit Void m a)
 
+-- | Create a `Writer` monad from a pair of a result and an accumulator.
+writerT :: forall w m a. Functor m => Monoid w => m (a /\ w) -> WriterT w m a
+writerT k = WriterT
+  ( RWSET
+      ( mkFn6 \_ _ more lift _ done ->
+          more \_ -> lift $ k <#> \(a /\ w) _ ->
+            runFn3 done unit a w
+      )
+  )
+
 -- | Runs a computation inside of `WriterT`.
 runWriterT :: forall w m a. Monoid w => MonadRec m => WriterT w m a -> m (a /\ w)
 runWriterT (WriterT k) = go <$> runRWSET unit unit k

@@ -11,12 +11,11 @@ module Uncurried.RWSE
 
 import Prelude
 
-import Data.Either (Either(..))
-import Data.Function.Uncurried (mkFn6, runFn3)
+import Data.Either (Either)
 import Data.Identity (Identity(..))
-import Data.Tuple.Nested (type (/\), (/\))
+import Data.Tuple.Nested (type (/\))
 import Safe.Coerce (coerce)
-import Uncurried.RWSET (RWSET(..), evalRWSET, execRWSET, mapRWSET, runRWSET, withRWSET)
+import Uncurried.RWSET (RWSET, evalRWSET, execRWSET, mapRWSET, runRWSET, rwseT, withRWSET)
 
 -- | A type synonym for a `RWSET` with `Identity` as its base monad.
 type RWSE r w s e = RWSET r w s e Identity
@@ -25,14 +24,7 @@ type RWSE r w s e = RWSET r w s e Identity
 -- | and the state, and returns a new state, an error or a result, and
 -- | an accumulator.
 rwse :: forall r w s e a. Monoid w => (r -> s -> (s /\ Either e a /\ w)) -> RWSE r w s e a
-rwse f = RWSET
-  ( mkFn6 \environment state0 _ _ error done ->
-      case f environment state0 of
-        s /\ Left e /\ w ->
-          runFn3 error s e w
-        s /\ Right a /\ w ->
-          runFn3 done s a w
-  )
+rwse = rwseT <<< coerce
 
 -- | Runs a computation inside of `RWSE`.
 runRWSE :: forall r w s e a. Monoid w => r -> s -> RWSE r w s e a -> (s /\ Either e a /\ w)

@@ -2,6 +2,7 @@
 -- | transformer, `RWSET`.
 module Uncurried.RWSET
   ( RWSET(..)
+  , rwseT
   , runRWSET
   , evalRWSET
   , execRWSET
@@ -260,6 +261,25 @@ runRWSET r s (RWSET k) =
       runFn6 k r s More Lift
         (mkFn3 \s' e w -> Stop s' (Left e) w)
         (mkFn3 \s' a w -> Stop s' (Right a) w)
+
+-- | Create an `RWSE` monad from a function that takes the environment
+-- | and the state, and returns a new state, an error or a result, and
+-- | an accumulator.
+rwseT
+  :: forall r w s e m a
+   . Functor m
+  => Monoid w
+  => (r -> s -> m (s /\ Either e a /\ w))
+  -> RWSET r w s e m a
+rwseT f = RWSET
+  ( mkFn6 \environment state0 more lift error done ->
+      more \_ -> lift $ f environment state0 <#> \(s /\ ea /\ w) _ ->
+        case ea of
+          Left e ->
+            runFn3 error s e w
+          Right a ->
+            runFn3 done s a w
+  )
 
 -- | Runs a computation inside of `RWSET`, discarding the final state.
 evalRWSET

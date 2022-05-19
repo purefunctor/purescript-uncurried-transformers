@@ -22,6 +22,16 @@ import Uncurried.RWSET (RWSET(..), hoistRWSET, runRWSET)
 -- | penalty that would otherwise be solved by just using `RWSET`.
 newtype ReaderT r m a = ReaderT (RWSET r Unit Unit Void m a)
 
+-- | Construct a `ReaderT` given a function that requires some context.
+readerT :: forall r m a. Functor m => (r -> m a) -> ReaderT r m a
+readerT k = ReaderT
+  ( RWSET
+      ( mkFn6 \environment _ more lift _ done ->
+          more \_ -> lift $ k environment <#> \a _ ->
+            runFn3 done unit a unit
+      )
+  )
+
 -- | Runs a computation inside of `ReaderT`.
 runReaderT :: forall r m a. MonadRec m => r -> ReaderT r m a -> m a
 runReaderT r (ReaderT k) = go <$> runRWSET r unit k
