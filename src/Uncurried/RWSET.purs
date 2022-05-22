@@ -146,26 +146,26 @@ instance Monoid w => MonadReader r (RWSET r w s e m) where
     )
 
 instance Monoid w => MonadRec (RWSET r w s e m) where
-  tailRecM f a = RWSET
+  tailRecM f a0 = RWSET
     ( mkFn6 \environment state0 more lift error done ->
         let
-          loop = mkFn3 \state1 a' gas ->
-            case f a' of
+          loop = mkFn3 \state1 a1 w1 gas ->
+            case f a1 of
               RWSET k ->
                 runFn6 k environment state1 more lift error
-                  ( mkFn3 \state2 s w ->
+                  ( mkFn3 \state2 s w2 ->
                       case s of
                         Loop n ->
                           if gas == 0 then
                             more \_ ->
-                              runFn3 loop state2 n 30
+                              runFn3 loop state2 n (w1 <> w2) 30
                           else
-                            runFn3 loop state2 n (gas - 1)
+                            runFn3 loop state2 n (w1 <> w2) (gas - 1)
                         Done r ->
-                          runFn3 done state2 r w
+                          runFn3 done state2 r (w1 <> w2)
                   )
         in
-          runFn3 loop state0 a 30
+          runFn3 loop state0 a0 mempty 30
     )
 
 instance Monoid w => MonadState s (RWSET r w s e m) where

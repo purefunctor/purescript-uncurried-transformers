@@ -2,47 +2,27 @@ module Test.Main where
 
 import Prelude
 
-import Control.Monad.Rec.Class (class MonadRec, Step(..), tailRecM)
-import Control.Monad.State.Trans (class MonadState, get, put)
-import Control.Monad.State.Trans as Trs
+import Control.Monad.Rec.Class (Step(..), tailRecM)
+import Control.Monad.Writer.Class (tell)
 import Effect (Effect)
-import Effect.Class (class MonadEffect)
-import Effect.Class.Console (log, logShow)
-import Effect.Exception (catchException)
-import Uncurried.StateT as Uncurried
-
-limit :: Int
-limit = 50_000
-
-program :: forall m. MonadEffect m => MonadState Int m => m Unit
-program = go
-  where
-  go = do
-    current <- get
-    unless (current == limit) do
-      put (current + 1)
-      logShow current
-      go
-
-programSafe :: forall m. MonadRec m => MonadEffect m => MonadState Int m => m Unit
-programSafe = tailRecM go unit
-  where
-  go _ = do
-    current <- get
-    if current == limit then do
-      pure $ Done unit
-    else do
-      put (current + 1)
-      logShow current
-      pure $ Loop unit
+import Effect.Aff (launchAff_)
+import Test.Spec (describe, it)
+import Test.Spec.Assertions (shouldEqual)
+import Test.Spec.Reporter.Console (consoleReporter)
+import Test.Spec.Runner (runSpec)
+import Uncurried.Writer (execWriter)
 
 main :: Effect Unit
-main = do
-  Uncurried.evalStateT 0 programSafe
-  Trs.evalStateT programSafe 0
-
-  -- should not max out the call stack
-  Uncurried.evalStateT 0 program
-  -- should max out the call stack
-  Trs.evalStateT program 0 # catchException \_ -> do
-    log "Terminated!"
+main = launchAff_ $ runSpec [ consoleReporter ] do
+  describe "RWSET" do
+    describe "Instances" do
+      describe "MonadRec" do
+        it "should properly accumulate values"
+          let
+            action = tailRecM case _ of
+              0 ->
+                pure $ Done unit
+              n ->
+                tell "erin!" $> Loop (n - 1)
+          in
+            execWriter (action 2) `shouldEqual` "erin!erin!"
